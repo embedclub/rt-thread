@@ -168,26 +168,6 @@ config ARCH_ARMV8
     select ARCH_ARM_MMU
     select RT_USING_HW_ATOMIC
 
-config ARCH_MIPS
-    bool
-
-config ARCH_MIPS64
-    bool
-    select ARCH_CPU_64BIT
-
-config ARCH_MIPS_XBURST
-    bool
-    select ARCH_MIPS
-
-config ARCH_ANDES
-    bool
-
-config ARCH_CSKY
-    bool
-
-config ARCH_POWERPC
-    bool
-
 config ARCH_RISCV
     bool
 
@@ -210,17 +190,6 @@ config ARCH_RISCV64
     select ARCH_RISCV
     select ARCH_CPU_64BIT
     bool
-
-config ARCH_IA32
-    bool
-
-config ARCH_TIDSP
-    bool
-
-config ARCH_TIDSP_C28X
-    bool
-    select ARCH_TIDSP
-    select ARCH_CPU_STACK_GROWS_UPWARD
 
 config ARCH_HOST_SIMULATOR
     bool
