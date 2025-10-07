@@ -19,30 +19,20 @@
 /* exception and interrupt handler table */
 struct rt_irq_desc isr_table[MAX_HANDLERS];
 
-#ifndef RT_USING_SMP
 /* Those variables will be accessed in ISR, so we need to share them. */
 rt_ubase_t rt_interrupt_from_thread        = 0;
 rt_ubase_t rt_interrupt_to_thread          = 0;
 rt_ubase_t rt_thread_switch_interrupt_flag = 0;
-#endif
 
 const unsigned int VECTOR_BASE = 0x00;
 extern int system_vectors;
 
-#ifdef RT_USING_SMP
-#define rt_interrupt_nest rt_cpu_self()->irq_nest
-#else
 extern volatile rt_uint8_t rt_interrupt_nest;
-#endif
 
 #ifndef BSP_USING_GIC
 static void default_isr_handler(int vector, void *param)
 {
-#ifdef RT_USING_SMP
-    rt_kprintf("cpu %d unhandled irq: %d\n", rt_hw_cpu_id(),vector);
-#else
     rt_kprintf("unhandled irq: %d\n",vector);
-#endif
 }
 #endif
 
@@ -391,19 +381,4 @@ rt_isr_handler_t rt_hw_interrupt_install(int vector, rt_isr_handler_t handler,
 
     return old_handler;
 }
-
-#ifdef RT_USING_SMP
-void rt_hw_ipi_send(int ipi_vector, unsigned int cpu_mask)
-{
-#ifdef BSP_USING_GIC
-    arm_gic_send_sgi(0, ipi_vector, cpu_mask, 0);
-#endif
-}
-
-void rt_hw_ipi_handler_install(int ipi_vector, rt_isr_handler_t ipi_isr_handler)
-{
-    /* note: ipi_vector maybe different with irq_vector */
-    rt_hw_interrupt_install(ipi_vector, ipi_isr_handler, 0, "IPI_HANDLER");
-}
-#endif
 

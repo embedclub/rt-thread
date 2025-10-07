@@ -69,9 +69,6 @@ void rt_hw_trap_irq(void)
 
 #ifdef BSP_USING_CORETIMER
     uint32_t cpu_id = 0;
-#ifdef RT_USING_SMP
-    cpu_id = rt_hw_cpu_id();
-#endif
     uint32_t int_source = CORE_IRQSOURCE(cpu_id) & 0x3ff;
     if (int_source & 0x02)
     {

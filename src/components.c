@@ -185,9 +185,6 @@ void main_thread_entry(void *parameter)
     rt_components_init();
 #endif /* RT_USING_COMPONENTS_INIT */
 
-#ifdef RT_USING_SMP
-    rt_hw_secondary_cpu_up();
-#endif /* RT_USING_SMP */
     /* invoke system main function */
 #ifdef __ARMCC_VERSION
     {
@@ -248,11 +245,6 @@ int rtthread_startup(void)
     /* scheduler system initialization */
     rt_system_scheduler_init();
 
-#ifdef RT_USING_SIGNALS
-    /* signal system initialization */
-    rt_system_signal_init();
-#endif /* RT_USING_SIGNALS */
-
     /* create init_thread */
     rt_application_init();
 
@@ -261,10 +253,6 @@ int rtthread_startup(void)
 
     /* idle thread initialization */
     rt_thread_idle_init();
-
-#ifdef RT_USING_SMP
-    rt_hw_spin_lock(&_cpus_lock);
-#endif /* RT_USING_SMP */
 
     /* start scheduler */
     rt_system_scheduler_start();
