@@ -29,13 +29,6 @@ extern int system_vectors;
 
 extern volatile rt_uint8_t rt_interrupt_nest;
 
-#ifndef BSP_USING_GIC
-static void default_isr_handler(int vector, void *param)
-{
-    rt_kprintf("unhandled irq: %d\n",vector);
-}
-#endif
-
 void rt_hw_vector_init(void)
 {
     rt_hw_set_current_vbar((rt_ubase_t)&system_vectors);
@@ -46,34 +39,7 @@ void rt_hw_vector_init(void)
  */
 void rt_hw_interrupt_init(void)
 {
-#ifndef BSP_USING_GIC
-    rt_uint32_t index;
-    /* initialize vector table */
-    rt_hw_vector_init();
-
-    /* initialize exceptions table */
-    rt_memset(isr_table, 0x00, sizeof(isr_table));
-
-    /* mask all of interrupts */
-    IRQ_DISABLE_BASIC = 0x000000ff;
-    IRQ_DISABLE1      = 0xffffffff;
-    IRQ_DISABLE2      = 0xffffffff;
-    for (index = 0; index < MAX_HANDLERS; index ++)
-    {
-        isr_table[index].handler = default_isr_handler;
-        isr_table[index].param = RT_NULL;
-#ifdef RT_USING_INTERRUPT_INFO
-        rt_strncpy(isr_table[index].name, "unknown", RT_NAME_MAX);
-        isr_table[index].counter = 0;
-#endif
-    }
-
-    /* init interrupt nest, and context in thread sp */
-    rt_interrupt_nest = 0;
-    rt_interrupt_from_thread = 0;
-    rt_interrupt_to_thread = 0;
-    rt_thread_switch_interrupt_flag = 0;
-#else
+#ifdef BSP_USING_GIC
     rt_uint64_t gic_cpu_base;
     rt_uint64_t gic_dist_base;
     rt_uint64_t gic_irq_start;
@@ -101,22 +67,7 @@ void rt_hw_interrupt_init(void)
  */
 void rt_hw_interrupt_mask(int vector)
 {
-#ifndef BSP_USING_GIC
-    if (vector < 32)
-    {
-        IRQ_DISABLE1 = (1 << vector);
-    }
-    else if (vector < 64)
-    {
-        vector = vector % 32;
-        IRQ_DISABLE2 = (1 << vector);
-    }
-    else
-    {
-        vector = vector - 64;
-        IRQ_DISABLE_BASIC = (1 << vector);
-    }
-#else
+#ifdef BSP_USING_GIC
     arm_gic_mask(0, vector);
 #endif
 }
@@ -127,22 +78,7 @@ void rt_hw_interrupt_mask(int vector)
  */
 void rt_hw_interrupt_umask(int vector)
 {
-#ifndef BSP_USING_GIC
-if (vector < 32)
-    {
-        IRQ_ENABLE1 = (1 << vector);
-    }
-    else if (vector < 64)
-    {
-        vector = vector % 32;
-        IRQ_ENABLE2 = (1 << vector);
-    }
-    else
-    {
-        vector = vector - 64;
-        IRQ_ENABLE_BASIC = (1 << vector);
-    }
-#else
+#ifdef BSP_USING_GIC
     arm_gic_umask(0, vector);
 #endif
 }
@@ -155,8 +91,6 @@ int rt_hw_interrupt_get_irq(void)
 {
 #ifdef BSP_USING_GIC
     return arm_gic_get_active_irq(0);
-#else
-    return 0;
 #endif
 }
 
@@ -192,8 +126,6 @@ unsigned int rt_hw_interrupt_get_target_cpus(int vector)
 {
 #ifdef BSP_USING_GIC
     return arm_gic_get_target_cpu(0, vector);
-#else
-    return -RT_ERROR;
 #endif
 }
 
@@ -218,8 +150,6 @@ unsigned int rt_hw_interrupt_get_triger_mode(int vector)
 {
 #ifdef BSP_USING_GIC
     return arm_gic_get_configuration(0, vector);
-#else
-    return -RT_ERROR;
 #endif
 }
 
@@ -243,8 +173,6 @@ unsigned int rt_hw_interrupt_get_pending(int vector)
 {
 #ifdef BSP_USING_GIC
     return arm_gic_get_pending_irq(0, vector);
-#else
-    return -RT_ERROR;
 #endif
 }
 
@@ -280,8 +208,6 @@ unsigned int rt_hw_interrupt_get_priority(int vector)
 {
 #ifdef BSP_USING_GIC
     return arm_gic_get_priority(0, vector);
-#else
-    return -RT_ERROR;
 #endif
 }
 
@@ -305,8 +231,6 @@ unsigned int rt_hw_interrupt_get_priority_mask(void)
 {
 #ifdef BSP_USING_GIC
     return arm_gic_get_interface_prior_mask(0);
-#else
-    return -RT_ERROR;
 #endif
 }
 
@@ -331,8 +255,6 @@ int rt_hw_interrupt_set_prior_group_bits(unsigned int bits)
     }
 
     return (status);
-#else
-    return -RT_ERROR;
 #endif
 }
 
@@ -349,8 +271,6 @@ unsigned int rt_hw_interrupt_get_prior_group_bits(void)
     bp = arm_gic_get_binary_point(0) & 0x07;
 
     return (7 - bp);
-#else
-    return -RT_ERROR;
 #endif
 }
 

@@ -48,19 +48,6 @@
 struct finsh_shell *shell;
 static char *finsh_prompt_custom = RT_NULL;
 
-#if defined(_MSC_VER) || (defined(__GNUC__) && defined(__x86_64__))
-struct finsh_syscall *finsh_syscall_next(struct finsh_syscall *call)
-{
-    unsigned int *ptr;
-    ptr = (unsigned int *)(call + 1);
-    while ((*ptr == 0) && ((unsigned int *)ptr < (unsigned int *) _syscall_table_end))
-        ptr ++;
-
-    return (struct finsh_syscall *)ptr;
-}
-
-#endif /* defined(_MSC_VER) || (defined(__GNUC__) && defined(__x86_64__)) */
-
 #ifdef RT_USING_HEAP
 int finsh_set_prompt(const char *prompt)
 {
@@ -680,37 +667,6 @@ void finsh_system_function_init(const void *begin, const void *end)
     _syscall_table_end = (struct finsh_syscall *) end;
 }
 
-#if defined(__ICCARM__) || defined(__ICCRX__)               /* for IAR compiler */
-#ifdef FINSH_USING_SYMTAB
-    #pragma section="FSymTab"
-#endif
-#elif defined(__ADSPBLACKFIN__) /* for VisaulDSP++ Compiler*/
-#ifdef FINSH_USING_SYMTAB
-    extern "asm" int __fsymtab_start;
-    extern "asm" int __fsymtab_end;
-#endif
-#elif defined(_MSC_VER)
-#pragma section("FSymTab$a", read)
-const char __fsym_begin_name[] = "__start";
-const char __fsym_begin_desc[] = "begin of finsh";
-__declspec(allocate("FSymTab$a")) const struct finsh_syscall __fsym_begin =
-{
-    __fsym_begin_name,
-    __fsym_begin_desc,
-    NULL
-};
-
-#pragma section("FSymTab$z", read)
-const char __fsym_end_name[] = "__end";
-const char __fsym_end_desc[] = "end of finsh";
-__declspec(allocate("FSymTab$z")) const struct finsh_syscall __fsym_end =
-{
-    __fsym_end_name,
-    __fsym_end_desc,
-    NULL
-};
-#endif
-
 /*
  * @ingroup finsh
  *
@@ -722,38 +678,11 @@ int finsh_system_init(void)
     rt_thread_t tid;
 
 #ifdef FINSH_USING_SYMTAB
-#ifdef __ARMCC_VERSION  /* ARM C Compiler */
-    extern const int FSymTab$$Base;
-    extern const int FSymTab$$Limit;
-    finsh_system_function_init(&FSymTab$$Base, &FSymTab$$Limit);
-#elif defined (__ICCARM__) || defined(__ICCRX__)      /* for IAR Compiler */
-    finsh_system_function_init(__section_begin("FSymTab"),
-                               __section_end("FSymTab"));
-#elif defined (__GNUC__) || defined(__TI_COMPILER_VERSION__) || defined(__TASKING__)
-    /* GNU GCC Compiler and TI CCS */
+#ifdef __GNUC__
+    /* GNU GCC Compiler */
     extern const int __fsymtab_start;
     extern const int __fsymtab_end;
     finsh_system_function_init(&__fsymtab_start, &__fsymtab_end);
-#elif defined(__ADSPBLACKFIN__) /* for VisualDSP++ Compiler */
-    finsh_system_function_init(&__fsymtab_start, &__fsymtab_end);
-#elif defined(_MSC_VER)
-    unsigned int *ptr_begin, *ptr_end;
-
-    if (shell)
-    {
-        rt_kprintf("finsh shell already init.\n");
-        return RT_EOK;
-    }
-
-    ptr_begin = (unsigned int *)&__fsym_begin;
-    ptr_begin += (sizeof(struct finsh_syscall) / sizeof(unsigned int));
-    while (*ptr_begin == 0) ptr_begin ++;
-
-    ptr_end = (unsigned int *) &__fsym_end;
-    ptr_end --;
-    while (*ptr_end == 0) ptr_end --;
-
-    finsh_system_function_init(ptr_begin, ptr_end);
 #endif
 #endif
 
@@ -768,14 +697,6 @@ int finsh_system_init(void)
     tid = rt_thread_create(FINSH_THREAD_NAME,
                            finsh_thread_entry, RT_NULL,
                            FINSH_THREAD_STACK_SIZE, FINSH_THREAD_PRIORITY, 10);
-#else
-    shell = &_shell;
-    tid = &finsh_thread;
-    result = rt_thread_init(&finsh_thread,
-                            FINSH_THREAD_NAME,
-                            finsh_thread_entry, RT_NULL,
-                            &finsh_thread_stack[0], sizeof(finsh_thread_stack),
-                            FINSH_THREAD_PRIORITY, 10);
 #endif /* RT_USING_HEAP */
 
     rt_sem_init(&(shell->rx_sem), "shrx", 0, 0);

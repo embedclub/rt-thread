@@ -39,27 +39,13 @@
 #endif /* (RT_USING_IDLE_HOOK) || defined(RT_USING_HEAP) */
 #endif /* IDLE_THREAD_STACK_SIZE */
 
-#ifdef RT_USING_SMP
-#define _CPUS_NR                RT_CPUS_NR
-#else
 #define _CPUS_NR                1
-#endif /* RT_USING_SMP */
 
 static rt_list_t _rt_thread_defunct = RT_LIST_OBJECT_INIT(_rt_thread_defunct);;
 
 static struct rt_thread idle[_CPUS_NR];
 ALIGN(RT_ALIGN_SIZE)
 static rt_uint8_t rt_thread_stack[_CPUS_NR][IDLE_THREAD_STACK_SIZE];
-
-#ifdef RT_USING_SMP
-#ifndef SYSTEM_THREAD_STACK_SIZE
-#define SYSTEM_THREAD_STACK_SIZE IDLE_THREAD_STACK_SIZE
-#endif
-static struct rt_thread rt_system_thread;
-ALIGN(RT_ALIGN_SIZE)
-static rt_uint8_t rt_system_stack[SYSTEM_THREAD_STACK_SIZE];
-static struct rt_semaphore system_sem;
-#endif
 
 #ifdef RT_USING_IDLE_HOOK
 #ifndef RT_IDLE_HOOK_LIST_SIZE
@@ -145,9 +131,6 @@ rt_err_t rt_thread_idle_delhook(void (*hook)(void))
 void rt_thread_defunct_enqueue(rt_thread_t thread)
 {
     rt_list_insert_after(&_rt_thread_defunct, &thread->tlist);
-#ifdef RT_USING_SMP
-    rt_sem_release(&system_sem);
-#endif
 }
 
 /**
@@ -159,18 +142,6 @@ rt_thread_t rt_thread_defunct_dequeue(void)
     rt_thread_t thread = RT_NULL;
     rt_list_t *l = &_rt_thread_defunct;
 
-#ifdef RT_USING_SMP
-    /* disable interrupt */
-    lock = rt_hw_interrupt_disable();
-    if (l->next != l)
-    {
-        thread = rt_list_entry(l->next,
-                struct rt_thread,
-                tlist);
-        rt_list_remove(&(thread->tlist));
-    }
-    rt_hw_interrupt_enable(lock);
-#else
     if (l->next != l)
     {
         thread = rt_list_entry(l->next,
@@ -180,7 +151,6 @@ rt_thread_t rt_thread_defunct_dequeue(void)
         rt_list_remove(&(thread->tlist));
         rt_hw_interrupt_enable(lock);
     }
-#endif
     return thread;
 }
 
@@ -244,16 +214,6 @@ static void rt_defunct_execute(void)
 extern void rt_system_power_manager(void);
 static void rt_thread_idle_entry(void *parameter)
 {
-#ifdef RT_USING_SMP
-    if (rt_hw_cpu_id() != 0)
-    {
-        while (1)
-        {
-            rt_hw_secondary_cpu_idle_exec();
-        }
-    }
-#endif /* RT_USING_SMP */
-
     while (1)
     {
 #ifdef RT_USING_IDLE_HOOK
@@ -280,17 +240,6 @@ static void rt_thread_idle_entry(void *parameter)
     }
 }
 
-#ifdef RT_USING_SMP
-static void rt_thread_system_entry(void *parameter)
-{
-    while (1)
-    {
-        rt_sem_take(&system_sem, RT_WAITING_FOREVER);
-        rt_defunct_execute();
-    }
-}
-#endif
-
 /**
  * @brief This function will initialize idle thread, then start it.
  *
@@ -312,30 +261,10 @@ void rt_thread_idle_init(void)
                 sizeof(rt_thread_stack[i]),
                 RT_THREAD_PRIORITY_MAX - 1,
                 32);
-#ifdef RT_USING_SMP
-        rt_thread_control(&idle[i], RT_THREAD_CTRL_BIND_CPU, (void*)i);
-#endif /* RT_USING_SMP */
         /* startup */
         rt_thread_startup(&idle[i]);
     }
 
-#ifdef RT_USING_SMP
-    RT_ASSERT(RT_THREAD_PRIORITY_MAX > 2);
-
-    rt_sem_init(&system_sem, "defunct", 1, RT_IPC_FLAG_FIFO);
-
-    /* create defunct thread */
-    rt_thread_init(&rt_system_thread,
-            "tsystem",
-            rt_thread_system_entry,
-            RT_NULL,
-            rt_system_stack,
-            sizeof(rt_system_stack),
-            RT_THREAD_PRIORITY_MAX - 2,
-            32);
-    /* startup */
-    rt_thread_startup(&rt_system_thread);
-#endif
 }
 
 /**
@@ -343,11 +272,7 @@ void rt_thread_idle_init(void)
  */
 rt_thread_t rt_thread_idle_gethandler(void)
 {
-#ifdef RT_USING_SMP
-    register int id = rt_hw_cpu_id();
-#else
     register int id = 0;
-#endif /* RT_USING_SMP */
 
     return (rt_thread_t)(&idle[id]);
 }

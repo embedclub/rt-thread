@@ -20,11 +20,7 @@
 #include <rthw.h>
 #include <rtthread.h>
 
-#ifdef RT_USING_SMP
-#define rt_tick rt_cpu_index(0)->tick
-#else
 static volatile rt_tick_t rt_tick = 0;
-#endif /* RT_USING_SMP */
 
 /**
  * @addtogroup Clock
@@ -70,11 +66,7 @@ void rt_tick_increase(void)
     level = rt_hw_interrupt_disable();
 
     /* increase the global tick */
-#ifdef RT_USING_SMP
-    rt_cpu_self()->tick ++;
-#else
     ++ rt_tick;
-#endif /* RT_USING_SMP */
 
     /* check time slice */
     thread = rt_thread_self();

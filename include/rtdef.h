@@ -202,48 +202,19 @@ typedef rt_base_t                       rt_off_t;       /**< Type for offset */
 /* initialization export */
 #ifdef RT_USING_COMPONENTS_INIT
 typedef int (*init_fn_t)(void);
-#ifdef _MSC_VER /* we do not support MS VC++ compiler */
-#pragma section("rti_fn$f",read)
-    #if RT_DEBUG_INIT
-        struct rt_init_desc
-        {
-            const char* level;
-            const init_fn_t fn;
-            const char* fn_name;
-        };
-        #define INIT_EXPORT(fn, level)                                  \
-                                const char __rti_level_##fn[] = level"__rt_init_"#fn;   \
-                                const char __rti_##fn##_name[] = #fn;                   \
-                                __declspec(allocate("rti_fn$f"))                        \
-                                RT_USED const struct rt_init_desc __rt_init_msc_##fn =  \
-                                {__rti_level_##fn, fn, __rti_##fn##_name};
-    #else
-        struct rt_init_desc
-        {
-            const char* level;
-            const init_fn_t fn;
-        };
-        #define INIT_EXPORT(fn, level)                                  \
-                                const char __rti_level_##fn[] = level"__rt_init_"#fn;   \
-                                __declspec(allocate("rti_fn$f"))                        \
-                                RT_USED const struct rt_init_desc __rt_init_msc_##fn =  \
-                                {__rti_level_##fn, fn };
-    #endif
+#if RT_DEBUG_INIT
+    struct rt_init_desc
+    {
+        const char* fn_name;
+        const init_fn_t fn;
+    };
+    #define INIT_EXPORT(fn, level)                                                       \
+        const char __rti_##fn##_name[] = #fn;                                            \
+        RT_USED const struct rt_init_desc __rt_init_desc_##fn RT_SECTION(".rti_fn." level) = \
+        { __rti_##fn##_name, fn};
 #else
-    #if RT_DEBUG_INIT
-        struct rt_init_desc
-        {
-            const char* fn_name;
-            const init_fn_t fn;
-        };
-        #define INIT_EXPORT(fn, level)                                                       \
-            const char __rti_##fn##_name[] = #fn;                                            \
-            RT_USED const struct rt_init_desc __rt_init_desc_##fn RT_SECTION(".rti_fn." level) = \
-            { __rti_##fn##_name, fn};
-    #else
-        #define INIT_EXPORT(fn, level)                                                       \
-            RT_USED const init_fn_t __rt_init_##fn RT_SECTION(".rti_fn." level) = fn
-    #endif
+    #define INIT_EXPORT(fn, level)                                                       \
+        RT_USED const init_fn_t __rt_init_##fn RT_SECTION(".rti_fn." level) = fn
 #endif
 #else
 #define INIT_EXPORT(fn, level)
@@ -613,44 +584,6 @@ typedef siginfo_t rt_siginfo_t;
 #define RT_THREAD_CTRL_INFO             0x03                /**< Get thread information. */
 #define RT_THREAD_CTRL_BIND_CPU         0x04                /**< Set thread bind cpu. */
 
-#ifdef RT_USING_SMP
-
-#define RT_CPU_DETACHED                 RT_CPUS_NR          /**< The thread not running on cpu. */
-#define RT_CPU_MASK                     ((1 << RT_CPUS_NR) - 1) /**< All CPUs mask bit. */
-
-#ifndef RT_SCHEDULE_IPI
-#define RT_SCHEDULE_IPI                 0
-#endif
-
-#ifndef RT_STOP_IPI
-#define RT_STOP_IPI                     1
-#endif
-
-/**
- * CPUs definitions
- *
- */
-struct rt_cpu
-{
-    struct rt_thread *current_thread;
-
-    rt_uint16_t irq_nest;
-    rt_uint8_t  irq_switch_flag;
-
-    rt_uint8_t current_priority;
-    rt_list_t priority_table[RT_THREAD_PRIORITY_MAX];
-#if RT_THREAD_PRIORITY_MAX > 32
-    rt_uint32_t priority_group;
-    rt_uint8_t ready_table[32];
-#else
-    rt_uint32_t priority_group;
-#endif
-
-    rt_tick_t tick;
-};
-
-#endif
-
 /**
  * Thread structure
  */
@@ -680,15 +613,6 @@ struct rt_thread
 
     rt_uint8_t  stat;                                   /**< thread status */
 
-#ifdef RT_USING_SMP
-    rt_uint8_t  bind_cpu;                               /**< thread is bind to cpu */
-    rt_uint8_t  oncpu;                                  /**< process on cpu` */
-
-    rt_uint16_t scheduler_lock_nest;                    /**< scheduler lock count */
-    rt_uint16_t cpus_lock_nest;                         /**< cpus lock count */
-    rt_uint16_t critical_lock_nest;                     /**< critical lock count */
-#endif /*RT_USING_SMP*/
-
     /* priority */
     rt_uint8_t  current_priority;                       /**< current priority */
     rt_uint8_t  init_priority;                          /**< initialized priority */
@@ -708,9 +632,7 @@ struct rt_thread
     rt_sigset_t     sig_pending;                        /**< the pending signals */
     rt_sigset_t     sig_mask;                           /**< the mask bits of signal */
 
-#ifndef RT_USING_SMP
     void            *sig_ret;                           /**< the return stack pointer from signal */
-#endif
     rt_sighandler_t *sig_vectors;                       /**< vectors of signal handler */
     void            *si_list;                           /**< the signal infor list */
 #endif

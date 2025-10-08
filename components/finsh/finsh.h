@@ -158,12 +158,7 @@ struct finsh_syscall_item
 extern struct finsh_syscall_item *global_syscall_list;
 extern struct finsh_syscall *_syscall_table_begin, *_syscall_table_end;
 
-#if defined(_MSC_VER) || (defined(__GNUC__) && defined(__x86_64__))
-    struct finsh_syscall *finsh_syscall_next(struct finsh_syscall *call);
-    #define FINSH_NEXT_SYSCALL(index)  index=finsh_syscall_next(index)
-#else
-    #define FINSH_NEXT_SYSCALL(index)  index++
-#endif
+#define FINSH_NEXT_SYSCALL(index)  index++
 
 /* find out system call, which should be implemented in user program */
 struct finsh_syscall *finsh_syscall_lookup(const char *name);

@@ -136,26 +136,7 @@ void rt_application_init(void);
 void rt_hw_board_init(void);
 int rtthread_startup(void);
 
-#ifdef __ARMCC_VERSION
-extern int $Super$$main(void);
-/* re-define main function */
-int $Sub$$main(void)
-{
-    rtthread_startup();
-    return 0;
-}
-#elif defined(__ICCARM__)
-extern int main(void);
-/* __low_level_init will auto called by IAR cstartup */
-extern void __iar_data_init3(void);
-int __low_level_init(void)
-{
-    // call IAR table copy function.
-    __iar_data_init3();
-    rtthread_startup();
-    return 0;
-}
-#elif defined(__GNUC__)
+#ifdef __GNUC__
 /* Add -eentry to arm-none-eabi-gcc argument */
 int entry(void)
 {
@@ -163,13 +144,6 @@ int entry(void)
     return 0;
 }
 #endif
-
-#ifndef RT_USING_HEAP
-/* if there is not enable heap, we should use static thread and stack. */
-ALIGN(8)
-static rt_uint8_t main_stack[RT_MAIN_THREAD_STACK_SIZE];
-struct rt_thread main_thread;
-#endif /* RT_USING_HEAP */
 
 /**
  * @brief  The system main thread. In this thread will call the rt_components_init()
@@ -186,12 +160,7 @@ void main_thread_entry(void *parameter)
 #endif /* RT_USING_COMPONENTS_INIT */
 
     /* invoke system main function */
-#ifdef __ARMCC_VERSION
-    {
-        extern int $Super$$main(void);
-        $Super$$main(); /* for ARMCC. */
-    }
-#elif defined(__ICCARM__) || defined(__GNUC__) || defined(__TASKING__)
+#ifdef __GNUC__
     main();
 #endif
 }
@@ -208,16 +177,6 @@ void rt_application_init(void)
     tid = rt_thread_create("main", main_thread_entry, RT_NULL,
                            RT_MAIN_THREAD_STACK_SIZE, RT_MAIN_THREAD_PRIORITY, 20);
     RT_ASSERT(tid != RT_NULL);
-#else
-    rt_err_t result;
-
-    tid = &main_thread;
-    result = rt_thread_init(tid, "main", main_thread_entry, RT_NULL,
-                            main_stack, sizeof(main_stack), RT_MAIN_THREAD_PRIORITY, 20);
-    RT_ASSERT(result == RT_EOK);
-
-    /* if not define RT_USING_HEAP, using to eliminate the warning */
-    (void)result;
 #endif /* RT_USING_HEAP */
 
     rt_thread_startup(tid);

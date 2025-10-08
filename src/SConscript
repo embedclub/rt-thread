@@ -24,9 +24,6 @@ if GetDepend('RT_USING_SIGNALS') == False:
 if GetDepend('RT_USING_DEVICE') == False:
     SrcRemove(src, ['device.c'])
 
-if GetDepend('RT_USING_SMP') == False:
-    SrcRemove(src, ['cpu.c'])
-
 CPPDEFINES = ['__RTTHREAD__']
 
 group = DefineGroup('Kernel', src, depend = [''], CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES)

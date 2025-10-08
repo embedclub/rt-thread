@@ -192,17 +192,6 @@ static rt_err_t _thread_init(struct rt_thread *thread,
     thread->error = RT_EOK;
     thread->stat  = RT_THREAD_INIT;
 
-#ifdef RT_USING_SMP
-    /* not bind on any cpu */
-    thread->bind_cpu = RT_CPUS_NR;
-    thread->oncpu = RT_CPU_DETACHED;
-
-    /* lock init */
-    thread->scheduler_lock_nest = 0;
-    thread->cpus_lock_nest = 0;
-    thread->critical_lock_nest = 0;
-#endif /* RT_USING_SMP */
-
     /* initialize cleanup function and user data */
     thread->cleanup   = 0;
     thread->user_data = 0;
@@ -220,9 +209,7 @@ static rt_err_t _thread_init(struct rt_thread *thread,
     thread->sig_mask    = 0x00;
     thread->sig_pending = 0x00;
 
-#ifndef RT_USING_SMP
     thread->sig_ret     = RT_NULL;
-#endif /* RT_USING_SMP */
     thread->sig_vectors = RT_NULL;
     thread->si_list     = RT_NULL;
 #endif /* RT_USING_SIGNALS */
@@ -303,19 +290,9 @@ RTM_EXPORT(rt_thread_init);
  */
 rt_thread_t rt_thread_self(void)
 {
-#ifdef RT_USING_SMP
-    rt_base_t lock;
-    rt_thread_t self;
-
-    lock = rt_hw_local_irq_disable();
-    self = rt_cpu_self()->current_thread;
-    rt_hw_local_irq_enable(lock);
-    return self;
-#else
     extern rt_thread_t rt_current_thread;
 
     return rt_current_thread;
-#endif /* RT_USING_SMP */
 }
 RTM_EXPORT(rt_thread_self);
 
@@ -768,23 +745,6 @@ rt_err_t rt_thread_control(rt_thread_t thread, int cmd, void *arg)
             rt_schedule();
             return rt_err;
         }
-
-    #ifdef RT_USING_SMP
-        case RT_THREAD_CTRL_BIND_CPU:
-        {
-            rt_uint8_t cpu;
-
-            if ((thread->stat & RT_THREAD_STAT_MASK) != RT_THREAD_INIT)
-            {
-                /* we only support bind cpu before started phase. */
-                return RT_ERROR;
-            }
-
-            cpu = (rt_uint8_t)(rt_size_t)arg;
-            thread->bind_cpu = cpu > RT_CPUS_NR? RT_CPUS_NR : cpu;
-            break;
-        }
-    #endif /* RT_USING_SMP */
 
         default:
             break;

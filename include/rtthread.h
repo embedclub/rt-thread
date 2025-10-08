@@ -197,10 +197,6 @@ void rt_scheduler_sethook(void (*hook)(rt_thread_t from, rt_thread_t to));
 void rt_scheduler_switch_sethook(void (*hook)(struct rt_thread *tid));
 #endif
 
-#ifdef RT_USING_SMP
-void rt_scheduler_ipi_handler(int vector, void *param);
-#endif
-
 /**@}*/
 
 /**
@@ -454,23 +450,11 @@ rt_thread_t rt_thread_defunct_dequeue(void);
 /*
  * spinlock
  */
-#ifdef RT_USING_SMP
-struct rt_spinlock;
-
-void rt_spin_lock_init(struct rt_spinlock *lock);
-void rt_spin_lock(struct rt_spinlock *lock);
-void rt_spin_unlock(struct rt_spinlock *lock);
-rt_base_t rt_spin_lock_irqsave(struct rt_spinlock *lock);
-void rt_spin_unlock_irqrestore(struct rt_spinlock *lock, rt_base_t level);
-
-#else
 #define rt_spin_lock_init(lock)                 /* nothing */
 #define rt_spin_lock(lock)                      rt_enter_critical()
 #define rt_spin_unlock(lock)                    rt_exit_critical()
 #define rt_spin_lock_irqsave(lock)              rt_hw_interrupt_disable()
 #define rt_spin_unlock_irqrestore(lock, level)  rt_hw_interrupt_enable(level)
-
-#endif
 
 /**@}*/
 
@@ -528,20 +512,6 @@ rt_err_t  rt_device_control(rt_device_t dev, int cmd, void *arg);
  */
 void rt_interrupt_enter(void);
 void rt_interrupt_leave(void);
-
-#ifdef RT_USING_SMP
-
-/*
- * smp cpus lock service
- */
-
-rt_base_t rt_cpus_lock(void);
-void rt_cpus_unlock(rt_base_t level);
-
-struct rt_cpu *rt_cpu_self(void);
-struct rt_cpu *rt_cpu_index(int index);
-
-#endif
 
 /*
  * the number of nested interrupts.

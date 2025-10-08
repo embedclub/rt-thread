@@ -172,15 +172,9 @@ long list_thread(void)
 
     maxlen = RT_NAME_MAX;
 
-#ifdef RT_USING_SMP
-    rt_kprintf("%-*.s cpu bind pri  status      sp     stack size max used left tick  error\n", maxlen, item_title);
-    object_split(maxlen);
-    rt_kprintf(" --- ---- ---  ------- ---------- ----------  ------  ---------- ---\n");
-#else
     rt_kprintf("%-*.s pri  status      sp     stack size max used left tick  error\n", maxlen, item_title);
     object_split(maxlen);
     rt_kprintf(" ---  ------- ---------- ----------  ------  ---------- ---\n");
-#endif /*RT_USING_SMP*/
 
     do
     {
@@ -209,15 +203,7 @@ long list_thread(void)
                     rt_uint8_t stat;
                     rt_uint8_t *ptr;
 
-#ifdef RT_USING_SMP
-                    if (thread->oncpu != RT_CPU_DETACHED)
-                        rt_kprintf("%-*.*s %3d %3d %4d ", maxlen, RT_NAME_MAX, thread->name, thread->oncpu, thread->bind_cpu, thread->current_priority);
-                    else
-                        rt_kprintf("%-*.*s N/A %3d %4d ", maxlen, RT_NAME_MAX, thread->name, thread->bind_cpu, thread->current_priority);
-
-#else
                     rt_kprintf("%-*.*s %3d ", maxlen, RT_NAME_MAX, thread->name, thread->current_priority);
-#endif /*RT_USING_SMP*/
                     stat = (thread->stat & RT_THREAD_STAT_MASK);
                     if (stat == RT_THREAD_READY)        rt_kprintf(" ready  ");
                     else if (stat == RT_THREAD_SUSPEND) rt_kprintf(" suspend");
