@@ -26,9 +26,6 @@
 #include <rtdef.h>
 #include <rtservice.h>
 #include <rtm.h>
-#ifdef RT_USING_LEGACY
-#include <rtlegacy.h>
-#endif
 
 #ifdef __cplusplus
 extern "C" {
