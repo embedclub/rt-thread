@@ -26,22 +26,6 @@ struct hw_uart_device
 static struct rt_serial_device _serial0;
 #endif
 
-#ifdef RT_USING_UART1
-static struct rt_serial_device _serial1;
-#endif
-
-#ifdef RT_USING_UART3
-static struct rt_serial_device _serial3;
-#endif
-
-#ifdef RT_USING_UART4
-static struct rt_serial_device _serial4;
-#endif
-
-#ifdef RT_USING_UART5
-static struct rt_serial_device _serial5;
-#endif
-
 static rt_err_t uart_configure(struct rt_serial_device *serial, struct serial_configure *cfg)
 {
     struct hw_uart_device *uart;
@@ -188,14 +172,6 @@ static const struct rt_uart_ops _uart_ops =
     uart_getc,
 };
 
-#ifdef RT_USING_UART1
-static void rt_hw_aux_uart_isr(int irqno, void *param)
-{
-    struct rt_serial_device *serial = (struct rt_serial_device*)param;
-    rt_hw_serial_isr(serial, RT_SERIAL_EVENT_RX_IND);
-}
-#endif
-
 static void rt_hw_uart_isr(int irqno, void *param)
 {
 #ifdef RT_USING_UART0
@@ -206,33 +182,6 @@ static void rt_hw_uart_isr(int irqno, void *param)
         PL011_REG_ICR(UART0_BASE) = PL011_INTERRUPT_RECEIVE;
     }
 #endif
-
-#ifdef RT_USING_UART3
-    if((PACTL_CS & IRQ_UART3) == IRQ_UART3)
-    {
-        PACTL_CS &=  ~(IRQ_UART3);
-        rt_hw_serial_isr(&_serial3, RT_SERIAL_EVENT_RX_IND);
-        PL011_REG_ICR(uart3_addr) = PL011_INTERRUPT_RECEIVE;
-    }
-#endif
-
-#ifdef RT_USING_UART4
-    if((PACTL_CS & IRQ_UART4) == IRQ_UART4)
-    {
-        PACTL_CS &=  ~(IRQ_UART4);
-        rt_hw_serial_isr(&_serial4, RT_SERIAL_EVENT_RX_IND);
-        PL011_REG_ICR(uart4_addr) = PL011_INTERRUPT_RECEIVE;
-    }
-#endif
-
-#ifdef RT_USING_UART5
-    if((PACTL_CS & IRQ_UART5) == IRQ_UART5)
-    {
-        PACTL_CS &=  ~(IRQ_UART5);
-        rt_hw_serial_isr(&_serial5, RT_SERIAL_EVENT_RX_IND);
-        PL011_REG_ICR(uart5_addr) = PL011_INTERRUPT_RECEIVE;
-    }
-#endif
 }
 
 #ifdef RT_USING_UART0
@@ -240,39 +189,6 @@ static void rt_hw_uart_isr(int irqno, void *param)
 static struct hw_uart_device _uart0_device =
 {
     UART0_BASE,
-    IRQ_PL011,
-};
-#endif
-
-#ifdef RT_USING_UART1
-/* UART device driver structure */
-static struct hw_uart_device _uart1_device =
-{
-    AUX_BASE,
-    IRQ_AUX_UART,
-};
-#endif
-
-#ifdef RT_USING_UART3
-static struct hw_uart_device _uart3_device =
-{
-    UART3_BASE,
-    IRQ_PL011,
-};
-#endif
-
-#ifdef RT_USING_UART4
-static struct hw_uart_device _uart4_device =
-{
-    UART4_BASE,
-    IRQ_PL011,
-};
-#endif
-
-#ifdef RT_USING_UART5
-static struct hw_uart_device _uart5_device =
-{
-    UART5_BASE,
     IRQ_PL011,
 };
 #endif
@@ -298,70 +214,6 @@ int rt_hw_uart_init(void)
                           uart0);
     rt_hw_interrupt_install(uart0->irqno, rt_hw_uart_isr, &_serial0, "uart0");
 
-#endif
-
-#ifdef RT_USING_UART1
-    struct hw_uart_device *uart1;
-    uart1 = &_uart1_device;
-
-    _serial1.ops    = &_uart_ops;
-    _serial1.config = config;
-
-    uart1->hw_base = AUX_BASE;
-
-    /* register UART1 device */
-    rt_hw_serial_register(&_serial1, "uart1",
-                          RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX,
-                          uart1);
-    rt_hw_interrupt_install(uart1->irqno, rt_hw_aux_uart_isr, &_serial1, "uart1");
-#endif
-
-#ifdef RT_USING_UART3
-    struct hw_uart_device *uart3;
-    uart3 = &_uart3_device;
-
-    _serial3.ops    = &_uart_ops;
-    _serial3.config = config;
-
-    uart3_addr = UART3_BASE;
-
-    /* register UART3 device */
-    rt_hw_serial_register(&_serial3, "uart3",
-                          RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX,
-                          uart3);
-    rt_hw_interrupt_install(uart3->irqno, rt_hw_uart_isr, &_serial3, "uart3");
-#endif
-
-#ifdef RT_USING_UART4
-    struct hw_uart_device *uart4;
-    uart4 = &_uart4_device;
-
-    _serial4.ops    = &_uart_ops;
-    _serial4.config = config;
-
-    uart4_addr = UART4_BASE;
-
-    /* register UART4 device */
-    rt_hw_serial_register(&_serial4, "uart4",
-                          RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX,
-                          uart4);
-    rt_hw_interrupt_install(uart4->irqno, rt_hw_uart_isr, &_serial4, "uart4");
-#endif
-
-#ifdef RT_USING_UART5
-    struct hw_uart_device *uart5;
-    uart5 = &_uart5_device;
-
-    _serial5.ops    = &_uart_ops;
-    _serial5.config = config;
-
-    uart5_addr = UART5_BASE;
-
-    /* register UART5 device */
-    rt_hw_serial_register(&_serial5, "uart5",
-                          RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX,
-                          uart5);
-    rt_hw_interrupt_install(uart5->irqno, rt_hw_uart_isr, &_serial5, "uart5");
 #endif
     return 0;
 }
