@@ -263,14 +263,6 @@ menu "Inter-Thread communication"
         bool "Enable message queue"
         default y
 
-    config RT_USING_SIGNALS
-        bool "Enable signals"
-        select RT_USING_MEMPOOL
-        default n
-        help
-            A signal is an asynchronous notification sent to a specific thread
-            in order to notify it of an event that occurred.
-
 endmenu
 
 menu "Memory Management"
