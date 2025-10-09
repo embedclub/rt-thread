@@ -37,8 +37,6 @@ void rt_hw_timer_isr(int vector, void *parameter)
 {
 #ifdef BSP_USING_CORETIMER
     rt_hw_set_gtimer_val(timerStep);
-#else
-    ARM_TIMER_IRQCLR = 0;
 #endif
     rt_tick_increase();
 }
@@ -56,26 +54,6 @@ void rt_hw_timer_init(void)
     rt_hw_gtimer_enable();
     rt_hw_set_gtimer_val(timerStep);
     core0_timer_enable_interrupt_controller();
-#else
-    rt_uint32_t apb_clock = 0;
-    rt_uint32_t timer_clock = 1000000;
-
-    apb_clock = bcm271x_mbox_clock_get_rate(CORE_CLK_ID);
-    ARM_TIMER_PREDIV = (apb_clock/timer_clock - 1);
-
-    ARM_TIMER_RELOAD = 0;
-    ARM_TIMER_LOAD   = 0;
-    ARM_TIMER_IRQCLR = 0;
-    ARM_TIMER_CTRL   = 0;
-
-    ARM_TIMER_RELOAD = 1000000 / RT_TICK_PER_SECOND;
-    ARM_TIMER_LOAD   = 1000000 / RT_TICK_PER_SECOND;
-
-    /* 23-bit counter, enable interrupt, enable timer */
-    ARM_TIMER_CTRL   = (1 << 1) | (1 << 5) | (1 << 7);
-
-    rt_hw_interrupt_install(ARM_TIMER_IRQ, rt_hw_timer_isr, RT_NULL, "tick");
-    rt_hw_interrupt_umask(ARM_TIMER_IRQ);
 #endif
 }
 
