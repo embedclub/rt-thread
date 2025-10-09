@@ -43,9 +43,6 @@ enum rt_object_info_type
 #ifdef RT_USING_MESSAGEQUEUE
     RT_Object_Info_MessageQueue,                       /**< The object is a message queue. */
 #endif
-#ifdef RT_USING_MEMHEAP
-    RT_Object_Info_MemHeap,                            /**< The object is a memory heap */
-#endif
 #ifdef RT_USING_MEMPOOL
     RT_Object_Info_MemPool,                            /**< The object is a memory pool. */
 #endif
@@ -88,10 +85,6 @@ static struct rt_object_information _object_container[RT_Object_Info_Unknown] =
 #ifdef RT_USING_MESSAGEQUEUE
     /* initialize object container - message queue */
     {RT_Object_Class_MessageQueue, _OBJ_CONTAINER_LIST_INIT(RT_Object_Info_MessageQueue), sizeof(struct rt_messagequeue)},
-#endif
-#ifdef RT_USING_MEMHEAP
-    /* initialize object container - memory heap */
-    {RT_Object_Class_MemHeap, _OBJ_CONTAINER_LIST_INIT(RT_Object_Info_MemHeap), sizeof(struct rt_memheap)},
 #endif
 #ifdef RT_USING_MEMPOOL
     /* initialize object container - memory pool */
