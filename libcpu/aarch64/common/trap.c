@@ -59,64 +59,7 @@ void rt_hw_trap_error(struct rt_hw_exp_stack *regs)
 
 void rt_hw_trap_irq(void)
 {
-#ifndef BSP_USING_GIC
-    void *param;
-    uint32_t irq;
-    rt_isr_handler_t isr_func;
-    extern struct rt_irq_desc isr_table[];
-    uint32_t value = 0;
-    value = IRQ_PEND_BASIC & 0x3ff;
-
-#ifdef BSP_USING_CORETIMER
-    uint32_t cpu_id = 0;
-    uint32_t int_source = CORE_IRQSOURCE(cpu_id) & 0x3ff;
-    if (int_source & 0x02)
-    {
-        isr_func = isr_table[IRQ_ARM_TIMER].handler;
-#ifdef RT_USING_INTERRUPT_INFO
-        isr_table[IRQ_ARM_TIMER].counter++;
-#endif
-        if (isr_func)
-        {
-            param = isr_table[IRQ_ARM_TIMER].param;
-            isr_func(IRQ_ARM_TIMER, param);
-        }
-    }
-#endif
-
-    /* local interrupt*/
-    if (value)
-    {
-        if (value & (1 << 8))
-        {
-            value = IRQ_PEND1;
-            irq = __rt_ffs(value) - 1;
-        }
-        else if (value & (1 << 9))
-        {
-            value = IRQ_PEND2;
-            irq = __rt_ffs(value) + 31;
-        }
-        else
-        {
-            value &= 0x0f;
-            irq = __rt_ffs(value) + 63;
-        }
-
-        /* get interrupt service routine */
-        isr_func = isr_table[irq].handler;
-#ifdef RT_USING_INTERRUPT_INFO
-        isr_table[irq].counter++;
-#endif
-        if (isr_func)
-        {
-            /* Interrupt for myself. */
-            param = isr_table[irq].param;
-            /* turn to interrupt service routine */
-            isr_func(irq, param);
-        }
-    }
-#else
+#ifdef BSP_USING_GIC
     void *param;
     int ir;
     rt_isr_handler_t isr_func;
