@@ -125,10 +125,6 @@ extern "C" {
 #include "drivers/rt_drv_pwm.h"
 #endif /* RT_USING_PWM */
 
-#ifdef RT_USING_PM
-#include "drivers/pm.h"
-#endif /* RT_USING_PM */
-
 #ifdef RT_USING_WIFI
 #include "drivers/wlan.h"
 #endif /* RT_USING_WIFI */

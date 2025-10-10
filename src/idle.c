@@ -226,13 +226,7 @@ static void rt_thread_idle_entry(void *parameter)
         }
 #endif /* RT_USING_IDLE_HOOK */
 
-#ifndef RT_USING_SMP
         rt_defunct_execute();
-#endif /* RT_USING_SMP */
-
-#ifdef RT_USING_PM
-        rt_system_power_manager();
-#endif /* RT_USING_PM */
     }
 }
 
