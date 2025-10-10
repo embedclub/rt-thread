@@ -15,6 +15,4 @@ config RT_LIBC_DEFAULT_TIMEZONE
     range -12 12
     default 8
 
-source "$RTT_DIR/components/libc/posix/Kconfig"
-
 endmenu
