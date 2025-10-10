@@ -133,16 +133,6 @@ int finsh_getchar(void)
 {
 #ifdef RT_USING_DEVICE
     char ch = 0;
-#ifdef RT_USING_POSIX_STDIO
-    if(read(STDIN_FILENO, &ch, 1) > 0)
-    {
-        return ch;
-    }
-    else
-    {
-        return -1; /* EOF */
-    }
-#else
     rt_device_t device;
 
     RT_ASSERT(shell != RT_NULL);
@@ -157,10 +147,6 @@ int finsh_getchar(void)
         rt_sem_take(&shell->rx_sem, RT_WAITING_FOREVER);
 
     return ch;
-#endif /* RT_USING_POSIX_STDIO */
-#else
-    extern char rt_hw_console_getchar(void);
-    return rt_hw_console_getchar();
 #endif /* RT_USING_DEVICE */
 }
 
@@ -424,11 +410,7 @@ void finsh_thread_entry(void *parameter)
     int ch;
 
     /* normal is echo mode */
-#ifndef FINSH_ECHO_DISABLE_DEFAULT
     shell->echo_mode = 1;
-#else
-    shell->echo_mode = 0;
-#endif
 
 #if !defined(RT_USING_POSIX_STDIO) && defined(RT_USING_DEVICE)
     /* set console device as shell device */
