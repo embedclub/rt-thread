@@ -21,22 +21,6 @@ config RT_USING_ARCH_DATA_TYPE
 
         Please re-define these data types in rtconfig_project.h file.
 
-config RT_USING_SMP
-    bool "Enable SMP(Symmetric multiprocessing)"
-    default n
-    help
-        This option should be selected by machines which have an SMP-
-        capable CPU.
-        The only effect of this option is to make the SMP-related
-        options available to the user for configuration.
-
-config RT_CPUS_NR
-    int "Number of CPUs"
-    default 2
-    depends on RT_USING_SMP
-    help
-        Number of CPUs in the system
-
 config RT_ALIGN_SIZE
     int "Alignment size for CPU architecture data access"
     default 4

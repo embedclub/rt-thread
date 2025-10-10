@@ -935,9 +935,6 @@ rt_err_t rt_mutex_take(rt_mutex_t mutex, rt_int32_t time)
     }
     else
     {
-#ifdef RT_USING_SIGNALS
-__again:
-#endif /* RT_USING_SIGNALS */
         /* The value of mutex is 1 in initial status. Therefore, if the
          * value is great than 0, it indicates the mutex is avaible.
          */
@@ -1014,11 +1011,6 @@ __again:
 
                 if (thread->error != RT_EOK)
                 {
-#ifdef RT_USING_SIGNALS
-                    /* interrupt by signal, try it again */
-                    if (thread->error == -RT_EINTR) goto __again;
-#endif /* RT_USING_SIGNALS */
-
                     /* return error */
                     return thread->error;
                 }

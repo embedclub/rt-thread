@@ -533,19 +533,6 @@ typedef struct rt_timer *rt_timer_t;
 /**@}*/
 
 /**
- * @addtogroup Signal
- */
-#ifdef RT_USING_SIGNALS
-#include <sys/signal.h>
-typedef unsigned long rt_sigset_t;
-typedef void (*rt_sighandler_t)(int signo);
-typedef siginfo_t rt_siginfo_t;
-
-#define RT_SIG_MAX          32
-#endif
-/**@}*/
-
-/**
  * @addtogroup Thread
  */
 
@@ -628,15 +615,6 @@ struct rt_thread
     rt_uint8_t  event_info;
 #endif
 
-#if defined(RT_USING_SIGNALS)
-    rt_sigset_t     sig_pending;                        /**< the pending signals */
-    rt_sigset_t     sig_mask;                           /**< the mask bits of signal */
-
-    void            *sig_ret;                           /**< the return stack pointer from signal */
-    rt_sighandler_t *sig_vectors;                       /**< vectors of signal handler */
-    void            *si_list;                           /**< the signal infor list */
-#endif
-
     rt_ubase_t  init_tick;                              /**< thread's initialized tick */
     rt_ubase_t  remaining_tick;                         /**< remaining tick */
 
@@ -647,11 +625,6 @@ struct rt_thread
     struct rt_timer thread_timer;                       /**< built-in thread timer */
 
     void (*cleanup)(struct rt_thread *tid);             /**< cleanup function when thread exit */
-
-    /* light weight process if present */
-#ifdef RT_USING_LWP
-    void        *lwp;
-#endif
 
     rt_ubase_t user_data;                             /**< private user data beyond this thread */
 };

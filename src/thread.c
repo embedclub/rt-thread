@@ -200,20 +200,6 @@ static rt_err_t _thread_init(struct rt_thread *thread,
                   0,
                   RT_TIMER_FLAG_ONE_SHOT);
 
-    /* initialize signal */
-#ifdef RT_USING_SIGNALS
-    thread->sig_mask    = 0x00;
-    thread->sig_pending = 0x00;
-
-    thread->sig_ret     = RT_NULL;
-    thread->sig_vectors = RT_NULL;
-    thread->si_list     = RT_NULL;
-#endif /* RT_USING_SIGNALS */
-
-#ifdef RT_USING_LWP
-    thread->lwp = RT_NULL;
-#endif /* RT_USING_LWP */
-
 #ifdef RT_USING_CPU_USAGE
     thread->duration_tick = 0;
 #endif

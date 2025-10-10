@@ -189,10 +189,6 @@ static void rt_defunct_execute(void)
             cleanup(thread);
         }
 
-#ifdef RT_USING_SIGNALS
-        rt_thread_free_sig(thread);
-#endif
-
         /* if it's a system object, not delete it */
         if (rt_object_is_systemobject((rt_object_t)thread) == RT_TRUE)
         {
