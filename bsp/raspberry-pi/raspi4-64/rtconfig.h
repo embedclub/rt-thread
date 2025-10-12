@@ -123,9 +123,6 @@
 #define RT_MMCSD_THREAD_PREORITY 22
 #define RT_MMCSD_MAX_PARTITION 16
 
-/* Using USB */
-
-
 /* POSIX layer and C standard library */
 
 #define RT_USING_LIBC
@@ -214,70 +211,6 @@
 
 /* RT-Thread Utestcases */
 
-
-/* RT-Thread online packages */
-
-/* IoT - internet of things */
-
-
-/* Wi-Fi */
-
-/* Marvell WiFi */
-
-
-/* Wiced WiFi */
-
-
-/* IoT Cloud */
-
-
-/* security packages */
-
-
-/* language packages */
-
-
-/* multimedia packages */
-
-/* LVGL: powerful and easy-to-use embedded GUI library */
-
-
-/* u8g2: a monochrome graphic library */
-
-
-/* PainterEngine: A cross-platform graphics application framework written in C language */
-
-
-/* tools packages */
-
-
-/* system packages */
-
-/* rt_kprintf: enhanced rt_kprintf packages */
-
-
-/* acceleration: Assembly language or algorithmic acceleration packages */
-
-
-/* CMSIS: ARM Cortex-M Microcontroller Software Interface Standard */
-
-
-/* Micrium: Micrium software products porting for RT-Thread */
-
-
-/* peripheral libraries and drivers */
-
-
-/* AI packages */
-
-
-/* miscellaneous packages */
-
-/* samples: kernel and components samples */
-
-
-/* entertainment: terminal games and other interesting software packages */
-
 #define BCM2711_SOC
 #define BSP_SUPPORT_FPU
 
@@ -296,8 +229,5 @@
 #define BSP_USING_ALARM
 #define BSP_USING_SDIO
 #define BSP_USING_SDIO0
-
-/* Board Peripheral Drivers */
-
 
 #endif
