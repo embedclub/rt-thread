@@ -434,7 +434,6 @@ rt_int32_t rt_mmcsd_blk_probe(struct rt_mmcsd_card *card)
     }
 
     LOG_D("probe mmcsd block device!");
-    rt_kprintf("[%s:%d %s], probe mmcsd block device\n", __FILE__, __LINE__, __FUNCTION__);
 
     /* get the first sector to read partition table */
     sector = (rt_uint8_t *)rt_malloc(SECTOR_SIZE);

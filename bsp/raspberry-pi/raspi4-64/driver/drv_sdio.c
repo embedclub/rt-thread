@@ -355,7 +355,6 @@ static void mmc_request_send(struct rt_mmcsd_host *host, struct rt_mmcsd_req *re
     cmd.cmdidx = req->cmd->cmd_code;
     cmd.cmdarg = req->cmd->arg;
     cmd.resptype = resp_type(req->cmd);
-    rt_kprintf("[%s:%d %s], cmdidx: %d, cmdarg: %d \n", __FILE__, __LINE__, __FUNCTION__, cmd.cmdidx, cmd.cmdarg);
     if (req->data)
     {
         dat.buf = (rt_uint8_t *)req->data->buf;
