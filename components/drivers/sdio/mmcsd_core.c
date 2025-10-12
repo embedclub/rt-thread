@@ -34,10 +34,6 @@
 #endif
 
 //static struct rt_semaphore mmcsd_sem;
-static struct rt_thread mmcsd_detect_thread;
-static rt_uint8_t mmcsd_stack[RT_MMCSD_STACK_SIZE];
-static struct rt_mailbox  mmcsd_detect_mb;
-static rt_uint32_t mmcsd_detect_mb_pool[4];
 static rt_uint32_t allocated_host_num = 0;
 
 void mmcsd_host_lock(struct rt_mmcsd_host *host)
@@ -493,20 +489,6 @@ void mmcsd_set_data_timeout(struct rt_mmcsd_data       *data,
             data->timeout_clks = 0;
         }
     }
-
-    if (controller_is_spi(card->host))
-    {
-        if (data->flags & DATA_DIR_WRITE)
-        {
-            if (data->timeout_ns < 1000000000)
-                data->timeout_ns = 1000000000;  /* 1s */
-        }
-        else
-        {
-            if (data->timeout_ns < 100000000)
-                data->timeout_ns =  100000000;  /* 100ms */
-        }
-    }
 }
 
 /*
@@ -587,18 +569,10 @@ static void mmcsd_power_off(struct rt_mmcsd_host *host)
 
 void mmcsd_change(struct rt_mmcsd_host *host)
 {
-    rt_mb_send(&mmcsd_detect_mb, (rt_ubase_t)host);
-}
-
-void mmcsd_detect(void *param)
-{
-    struct rt_mmcsd_host *host;
     rt_uint32_t  ocr;
     rt_int32_t  err;
 
-    while (1)
     {
-        if (rt_mb_recv(&mmcsd_detect_mb, (rt_ubase_t *)&host, RT_WAITING_FOREVER) == RT_EOK)
         {
 	    rt_kprintf("[%s:%d %s], rt_mb_recv has recv mailbox\n", __FILE__, __LINE__, __FUNCTION__);
             if (host->card == RT_NULL)
@@ -619,8 +593,6 @@ void mmcsd_detect(void *param)
                     rt_kprintf("[%s:%d %s], mmcsd_send_app_op_cond\n", __FILE__, __LINE__, __FUNCTION__);
                     if (init_sd(host, ocr))
                         mmcsd_power_off(host);
-                    mmcsd_host_unlock(host);
-                    continue;
                 }
 
                 mmcsd_host_unlock(host);
@@ -679,26 +651,3 @@ void mmcsd_free_host(struct rt_mmcsd_host *host)
     rt_sem_detach(&host->sem_ack);
     rt_free(host);
 }
-
-int rt_mmcsd_core_init(void)
-{
-    rt_err_t ret;
-
-    /* initialize detect SD cart thread */
-    /* initialize mailbox and create detect SD card thread */
-    ret = rt_mb_init(&mmcsd_detect_mb, "mmcsdmb",
-        &mmcsd_detect_mb_pool[0], sizeof(mmcsd_detect_mb_pool) / sizeof(mmcsd_detect_mb_pool[0]),
-        RT_IPC_FLAG_FIFO);
-    RT_ASSERT(ret == RT_EOK);
-
-    ret = rt_thread_init(&mmcsd_detect_thread, "mmcsd_detect", mmcsd_detect, RT_NULL,
-                 &mmcsd_stack[0], RT_MMCSD_STACK_SIZE, RT_MMCSD_THREAD_PREORITY, 20);
-    if (ret == RT_EOK)
-    {
-        rt_thread_startup(&mmcsd_detect_thread);
-    }
-
-    return 0;
-}
-INIT_PREV_EXPORT(rt_mmcsd_core_init);
-
