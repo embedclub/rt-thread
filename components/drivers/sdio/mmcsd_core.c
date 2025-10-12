@@ -38,8 +38,6 @@ static struct rt_thread mmcsd_detect_thread;
 static rt_uint8_t mmcsd_stack[RT_MMCSD_STACK_SIZE];
 static struct rt_mailbox  mmcsd_detect_mb;
 static rt_uint32_t mmcsd_detect_mb_pool[4];
-static struct rt_mailbox mmcsd_hotpluge_mb;
-static rt_uint32_t mmcsd_hotpluge_mb_pool[4];
 static rt_uint32_t allocated_host_num = 0;
 
 void mmcsd_host_lock(struct rt_mmcsd_host *host)
@@ -546,13 +544,9 @@ static void mmcsd_power_up(struct rt_mmcsd_host *host)
     int bit = __rt_fls(host->valid_ocr) - 1;
 
     host->io_cfg.vdd = bit;
-    if (controller_is_spi(host))
+    if (!controller_is_spi(host))
     {
-        host->io_cfg.chip_select = MMCSD_CS_HIGH;
-        host->io_cfg.bus_mode = MMCSD_BUSMODE_PUSHPULL;
-    }
-    else
-    {
+	rt_kprintf("[%s:%d %s], not controller_is_spi\n", __FILE__, __LINE__, __FUNCTION__);
         host->io_cfg.chip_select = MMCSD_CS_IGNORE;
         host->io_cfg.bus_mode = MMCSD_BUSMODE_OPENDRAIN;
     }
@@ -591,24 +585,6 @@ static void mmcsd_power_off(struct rt_mmcsd_host *host)
     mmcsd_set_iocfg(host);
 }
 
-int mmcsd_wait_cd_changed(rt_int32_t timeout)
-{
-    struct rt_mmcsd_host *host;
-    if (rt_mb_recv(&mmcsd_hotpluge_mb, (rt_ubase_t *)&host, timeout) == RT_EOK)
-    {
-        if(host->card == RT_NULL)
-        {
-            return MMCSD_HOST_UNPLUGED;
-        }
-        else
-        {
-            return MMCSD_HOST_PLUGED;
-        }
-    }
-    return -RT_ETIMEOUT;
-}
-RTM_EXPORT(mmcsd_wait_cd_changed);
-
 void mmcsd_change(struct rt_mmcsd_host *host)
 {
     rt_mb_send(&mmcsd_detect_mb, (rt_ubase_t)host);
@@ -624,22 +600,15 @@ void mmcsd_detect(void *param)
     {
         if (rt_mb_recv(&mmcsd_detect_mb, (rt_ubase_t *)&host, RT_WAITING_FOREVER) == RT_EOK)
         {
+	    rt_kprintf("[%s:%d %s], rt_mb_recv has recv mailbox\n", __FILE__, __LINE__, __FUNCTION__);
             if (host->card == RT_NULL)
             {
+                rt_kprintf("[%s:%d %s], sd report has been insert\n", __FILE__, __LINE__, __FUNCTION__);
                 mmcsd_host_lock(host);
                 mmcsd_power_up(host);
                 mmcsd_go_idle(host);
 
                 mmcsd_send_if_cond(host, host->valid_ocr);
-
-                err = sdio_io_send_op_cond(host, 0, &ocr);
-                if (!err)
-                {
-                    if (init_sdio(host, ocr))
-                        mmcsd_power_off(host);
-                    mmcsd_host_unlock(host);
-                    continue;
-                }
 
                 /*
                  * detect SD card
@@ -647,25 +616,13 @@ void mmcsd_detect(void *param)
                 err = mmcsd_send_app_op_cond(host, 0, &ocr);
                 if (!err)
                 {
+                    rt_kprintf("[%s:%d %s], mmcsd_send_app_op_cond\n", __FILE__, __LINE__, __FUNCTION__);
                     if (init_sd(host, ocr))
                         mmcsd_power_off(host);
                     mmcsd_host_unlock(host);
-                    rt_mb_send(&mmcsd_hotpluge_mb, (rt_ubase_t)host);
                     continue;
                 }
 
-                /*
-                 * detect mmc card
-                 */
-                err = mmc_send_op_cond(host, 0, &ocr);
-                if (!err)
-                {
-                    if (init_mmc(host, ocr))
-                        mmcsd_power_off(host);
-                    mmcsd_host_unlock(host);
-                    rt_mb_send(&mmcsd_hotpluge_mb, (rt_ubase_t)host);
-                    continue;
-                }
                 mmcsd_host_unlock(host);
             }
             else
@@ -684,7 +641,6 @@ void mmcsd_detect(void *param)
                     host->card = RT_NULL;
                 }
                 mmcsd_host_unlock(host);
-                rt_mb_send(&mmcsd_hotpluge_mb, (rt_ubase_t)host);
             }
         }
     }
@@ -735,18 +691,12 @@ int rt_mmcsd_core_init(void)
         RT_IPC_FLAG_FIFO);
     RT_ASSERT(ret == RT_EOK);
 
-   ret = rt_mb_init(&mmcsd_hotpluge_mb, "mmcsdhotplugmb",
-        &mmcsd_hotpluge_mb_pool[0], sizeof(mmcsd_hotpluge_mb_pool) / sizeof(mmcsd_hotpluge_mb_pool[0]),
-        RT_IPC_FLAG_FIFO);
-    RT_ASSERT(ret == RT_EOK);
-     ret = rt_thread_init(&mmcsd_detect_thread, "mmcsd_detect", mmcsd_detect, RT_NULL,
+    ret = rt_thread_init(&mmcsd_detect_thread, "mmcsd_detect", mmcsd_detect, RT_NULL,
                  &mmcsd_stack[0], RT_MMCSD_STACK_SIZE, RT_MMCSD_THREAD_PREORITY, 20);
     if (ret == RT_EOK)
     {
         rt_thread_startup(&mmcsd_detect_thread);
     }
-
-    rt_sdio_init();
 
     return 0;
 }

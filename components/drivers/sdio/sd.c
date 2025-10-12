@@ -302,11 +302,6 @@ rt_err_t mmcsd_send_app_cmd(struct rt_mmcsd_host *host,
         if (err)
         {
             /* no point in retrying; no APP commands allowed */
-            if (controller_is_spi(host))
-            {
-                if (cmd->resp[0] & R1_SPI_ILLEGAL_COMMAND)
-                    break;
-            }
             continue;
         }
 
@@ -324,11 +319,6 @@ rt_err_t mmcsd_send_app_cmd(struct rt_mmcsd_host *host,
             break;
 
         /* no point in retrying illegal APP commands */
-        if (controller_is_spi(host))
-        {
-            if (cmd->resp[0] & R1_SPI_ILLEGAL_COMMAND)
-                break;
-        }
     }
 
     return err;
@@ -374,9 +364,7 @@ rt_err_t mmcsd_send_app_op_cond(struct rt_mmcsd_host *host,
     rt_memset(&cmd, 0, sizeof(struct rt_mmcsd_cmd));
 
     cmd.cmd_code = SD_APP_OP_COND;
-    if (controller_is_spi(host))
-        cmd.arg = ocr & (1 << 30); /* SPI only defines one bit */
-    else
+    if (!controller_is_spi(host))
         cmd.arg = ocr;
     cmd.flags = RESP_SPI_R1 | RESP_R3 | CMD_BCR;
 
@@ -391,12 +379,7 @@ rt_err_t mmcsd_send_app_op_cond(struct rt_mmcsd_host *host,
             break;
 
         /* otherwise wait until reset completes */
-        if (controller_is_spi(host))
-        {
-            if (!(cmd.resp[0] & R1_SPI_IDLE))
-                break;
-        }
-        else
+        if (!controller_is_spi(host))
         {
             if (cmd.resp[0] & CARD_BUSY)
                 break;
@@ -432,9 +415,7 @@ rt_err_t mmcsd_send_if_cond(struct rt_mmcsd_host *host, rt_uint32_t ocr)
     if (err)
         return err;
 
-    if (controller_is_spi(host))
-        pattern = cmd.resp[1] & 0xFF;
-    else
+    if (!controller_is_spi(host))
         pattern = cmd.resp[0] & 0xFF;
 
     if (pattern != 0xAA)
@@ -536,9 +517,7 @@ static rt_int32_t mmcsd_sd_init_card(struct rt_mmcsd_host *host,
     if (err)
         goto err;
 
-    if (controller_is_spi(host))
-        err = mmcsd_get_cid(host, resp);
-    else
+    if (!controller_is_spi(host))
         err = mmcsd_all_get_cid(host, resp);
     if (err)
         goto err;
@@ -588,13 +567,6 @@ static rt_int32_t mmcsd_sd_init_card(struct rt_mmcsd_host *host,
         goto err1;
 
     mmcsd_parse_scr(card);
-
-    if (controller_is_spi(host))
-    {
-        err = mmcsd_spi_use_crc(host, 1);
-        if (err)
-            goto err1;
-    }
 
     /*
      * change SD card to high-speed, only SD2.0 spec
@@ -647,17 +619,6 @@ rt_int32_t init_sd(struct rt_mmcsd_host *host, rt_uint32_t ocr)
 {
     rt_int32_t err;
     rt_uint32_t  current_ocr;
-    /*
-     * We need to get OCR a different way for SPI.
-     */
-    if (controller_is_spi(host))
-    {
-        mmcsd_go_idle(host);
-
-        err = mmcsd_spi_read_ocr(host, 0, &ocr);
-        if (err)
-            goto err;
-    }
 
     if (ocr & VDD_165_195)
     {
