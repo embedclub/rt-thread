@@ -57,24 +57,6 @@ static rt_err_t uart_configure(struct rt_serial_device *serial, struct serial_co
         prev_raspi_pin_mode(GPIO_PIN_15, ALT0);
     }
 
-    if(uart->hw_base == UART3_BASE)
-    {
-        prev_raspi_pin_mode(GPIO_PIN_4, ALT4);
-        prev_raspi_pin_mode(GPIO_PIN_5, ALT4);
-    }
-
-    if(uart->hw_base == UART4_BASE)
-    {
-        prev_raspi_pin_mode(GPIO_PIN_8, ALT4);
-        prev_raspi_pin_mode(GPIO_PIN_9, ALT4);
-    }
-
-    if(uart->hw_base == UART5_BASE)
-    {
-        prev_raspi_pin_mode(GPIO_PIN_12, ALT4);
-        prev_raspi_pin_mode(GPIO_PIN_13, ALT4);
-    }
-
     PL011_REG_CR(uart->hw_base) = 0;/*Clear UART setting*/
     PL011_REG_LCRH(uart->hw_base) = 0;/*disable FIFO*/
     PL011_REG_IBRD(uart->hw_base) = ibrd;
