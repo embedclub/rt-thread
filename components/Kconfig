@@ -21,23 +21,15 @@ config RT_USING_USER_MAIN
             default 85  if RT_THREAD_PRIORITY_256
     endif
 
-config RT_USING_LEGACY
-    bool "Support legacy version for compatibility"
-    default n
-
 if RT_USING_CONSOLE
 rsource "finsh/Kconfig"
 endif
 
 if !RT_USING_NANO
 rsource "dfs/Kconfig"
-rsource "fal/Kconfig"
 rsource "drivers/Kconfig"
 rsource "libc/Kconfig"
-rsource "net/Kconfig"
-rsource "mprotect/Kconfig"
 rsource "utilities/Kconfig"
-rsource "vbus/Kconfig"
 endif
 
 if ARCH_MM_MMU
@@ -47,7 +39,5 @@ endif
 if RT_USING_SMART
 rsource "lwp/Kconfig"
 endif
-
-rsource "legacy/Kconfig"
 
 endmenu
