@@ -147,7 +147,6 @@
 #define RT_USING_CPU_FFS
 #define ARCH_MM_MMU
 #define ARCH_ARM
-#define ARCH_ARM_MMU
 #define KERNEL_VADDR_START 0xffff000000000000
 #define ARCH_ARMV8
 #define ARCH_USING_ASID
@@ -290,14 +289,6 @@
 /* end of POSIX (Portable Operating System Interface) layer */
 /* end of C/C++ and POSIX layer */
 
-/* Network */
-
-/* end of Network */
-
-/* Memory protection */
-
-/* end of Memory protection */
-
 /* Utilities */
 
 #define RT_USING_RESOURCE_ID
@@ -330,15 +321,7 @@
 #define LWP_USING_TERMINAL
 #define LWP_PTY_MAX_PARIS_LIMIT 64
 #define RT_USING_VDSO
-
-/* Using USB legacy version */
-
-/* end of Using USB legacy version */
 /* end of RT-Thread Components */
-
-/* RT-Thread Utestcases */
-
-/* end of RT-Thread Utestcases */
 
 /* RT-Thread online packages */
 
