@@ -74,3 +74,24 @@ telnet 127.0.0.1 4321
 | VIRTIO Console | 支持 | - |
 | VIRTIO GPU | 支持 | 2D |
 | VIRTIO Input | 支持 | Keyboard, Mouse, Tablet |
+
+## 5. smart版本搭建
+下载每日CI版本
+    https://download-redirect.rt-thread.org/download/rt-smart/prebuilt/qemu-virt64-aarch64_latest.tar.gz
+
+交叉编译器下载
+    https://github.com/RT-Thread/rt-thread/releases/download/v5.2.0/aarch64-linux-musleabi_for_x86_64-pc-linux-gnu_242520-979be38cba.tar.bz2
+
+配置环境
+```
+export RTT_CC="gcc"
+export RTT_EXEC_PATH="/opt/aarch64-linux-musleabi/bin/"
+export RTT_CC_PREFIX="aarch64-linux-musleabi-"
+export PATH="$RTT_EXEC_PATH:$PATH"
+```
+
+
+
+
+
+
